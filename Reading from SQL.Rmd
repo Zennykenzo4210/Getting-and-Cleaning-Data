@@ -1,72 +1,135 @@
 ---
-title: "Getting and Cleaning Data"
-output: html_notebook
+title: "Getting and Cleaning Data in R: Working with MySQL Databases"
+author: "TRAN ANH MINH"
+date: "`r Sys.Date()`"
+output: 
+  html_notebook:
+    toc: true
+    toc_float: true
+    theme: cosmo
 ---
-#Download the file to load
+# SECTION 1: DATA ACQUISITION
+This section handles the initial data download and setup procedures
+Note: The data is downloaded from Iowa government's open data portal
+## Create data directory if it doesn't exist
 ```{r}
-# check for file exist or not
+
 if(!file.exists("data")){
   dir.create("data")
+  print("Created new 'data' directory")
 }
-# download file
+```
+## Download and save the dataset
+```{r}
+
 fileURL <- "https://data.iowa.gov/api/views/4bfg-n52x/rows.csv?accessType=DOWNLOAD"
 download.file(fileURL, destfile = "cameras.csv", method = "curl")
-#Check date
+```
+## Record download timestamp for reproducibility
+```{r}
+
 dateDownloaded <- date()
+print(paste("Data downloaded on:", dateDownloaded))
 ```
 
-# mySQL
-- Free and widely used open source database software
-- Widely used in internet based applications
-- Data are structured in 
-  - Databases
-  - Tables within databases
-  - Fields within tables
-- Each row called a record
-More in : http://en.wikipedia.org/wiki/MySQL or http://www.mysql.com/
-## Connecting and listing databases
+# SECTION 2: MySQL DATABASE INTERACTION
+This section demonstrates interaction with MySQL databases focusing on the UCSC Genome Database as an example
+## 2.1 Required Libraries ----
+Install these packages if not already installed:
+
 Install 2 packages:
 ```{r}
+#install.packages(c("RMySQL", "DBI"))
 library(RMySQL)
 library(DBI)
 ```
-Connect to web have SQL databases:
+## 2.2 Database Connection and Overview ----
+MySQL is:
+- A free, open-source database management system
+- Widely used in web applications and bioinformatics
+- Structured hierarchically: Databases > Tables > Fields
+- Each row represents a record
+ 
+Reference: 
+- MySQL documentation: http://www.mysql.com/
+- Wikipedia: http://en.wikipedia.org/wiki/MySQL
+
+
+
+### Establish connection to UCSC Genome Database
 ```{r}
-ucscDb <- dbConnect(MySQL(), user = "genome",
-                 host ="genome-mysql.cse.ucsc.edu")
-result <- dbGetQuery(ucscDb, "show databases;"); dbDisconnect(ucscDb);
+ucscDb <- dbConnect(MySQL(), 
+                   user = "genome",
+                   host = "genome-mysql.cse.ucsc.edu")
+# Query available databases
+result <- dbGetQuery(ucscDb, "show databases;")
+dbDisconnect(ucscDb)  # Good practice to disconnect when done
 ```
-List databases:
+
+
+### Display available databases
 ```{r}
+print("Available Databases:")
 result
 ```
-## Connecting to hg19 and listing tables
+## 2.3 Working with the hg19 Database ----
+### Connect to specific database (hg19)
 ```{r}
-hg19 <- dbConnect(MySQL(), user = "genome", db = "hg19", host = "genome-mysql.cse.ucsc.edu")
+hg19 <- dbConnect(MySQL(), 
+                 user = "genome", 
+                 db = "hg19", 
+                 host = "genome-mysql.cse.ucsc.edu")
 allTables <- dbListTables(hg19)
 length(allTables)
 ```
-listing tables:
+### Get overview of tables
 ```{r}
+allTables <- dbListTables(hg19)
+print(paste("Total number of tables:", length(allTables)))
+print("First 5 tables:")
 allTables[1:5]
 ```
 
-## Get dimensions of a a specific table
+## 2.4 Exploring the affyU133Plus2 Table ----
+### List fields in the table
 ```{r}
+print("Fields in affyU133Plus2:")
 dbListFields(hg19,"affyU133Plus2")
+```
+### Get table dimensions
+```{r}
+print("Total records in affyU133Plus2:")
 dbGetQuery(hg19, "select count(*) from affyU133Plus2")
 ```
-## Read from the table
+### Preview table data
 ```{r}
+print("Preview of affyU133Plus2 data:")
 affyData <- dbReadTable(hg19, "affyU133Plus2")
 head(affyData)
 ```
-## Select a specific subset
+## 2.5 Advanced Queries ----
+### Query records with specific mismatch criteria
 ```{r}
-query <- dbSendQuery(hg19, "select * from affyU133Plus2 where misMatches between 1 and 3")
-affyMis <- fetch(query); quantile(affyMis$misMatches)
+query <- dbSendQuery(hg19, 
+                    "select * from affyU133Plus2 where misMatches between 1 and 3")
 
-affyMissSmall <- fetch(query, n = 10); dbClearResult(query); # Clear query before add new query
+```
+### Analyze results
+```{r}
+affyMis <- fetch(query)
+print("Quantiles of misMatches:")
+quantile(affyMis$misMatches)
+```
+### Fetch smaller subset for detailed examination
+```{r}
+affyMissSmall <- fetch(query, n = 10)
+dbClearResult(query)  # Clean up query
+print("Dimensions of small subset:")
 dim(affyMissSmall)
 ```
+### Close database connection
+```{r}
+dbDisconnect(hg19)
+```
+
 

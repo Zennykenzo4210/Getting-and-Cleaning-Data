@@ -1,0 +1,100 @@
+---
+title: "Reading from HDF5"
+output: html_document
+date: "2025-01-28"
+author:"TRAN ANH MINH"
+---
+
+#Introduction
+
+HDF5 (Hierarchical Data Format version 5) is an advanced file format widely used in data analysis and scientific computing:
+
+- Specifically designed for storing and managing large datasets (big data)
+- Supports diverse data types: integers, floating-point numbers, strings, etc.
+- Flexible hierarchical structure, similar to a file system
+- Optimized read/write performance
+- Built-in data compression capabilities
+
+## HDF5 Structure:
+1. Groups:
+   - Function like directories, containing datasets and metadata
+   - Group Header: Stores group name and attributes
+   - Group Symbol Table: Manages list of objects
+
+2. Datasets:
+   - Store data as multidimensional arrays
+   - Dataset Header: Defines name, datatype, dataspace
+   - Data Array: Contains actual data
+
+
+# RHDF5 Setup and Initialization
+```{r}
+# Install BiocManager if not present
+if (!require("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+# Install rhdf5 package
+BiocManager::install("rhdf5")
+# Load library
+library(rhdf5)
+# Create new HDF5 file
+created = h5createFile("example.h5")
+created 
+```
+# Creating Group Structure
+```{r}
+# Create main groups 'foo' and 'baa'
+created_1 <- h5createGroup("example.h5", "foo")
+created_1 <- h5createGroup("example.h5", "baa")
+
+# Create subgroup 'foobaa' in 'foo'
+created_1 <- h5createGroup("example.h5", "foo/foobaa")
+
+# Examine file structure
+h5ls("example.h5")
+```
+#Working with Datasets
+```{r}
+# Create and write 5x2 matrix
+A = matrix(1:10, nr=5, nc=2)
+h5write(A, "example.h5", "foo/A")
+
+# Create and write 3D array with attributes
+B = array(seq(0.1,2.0,by=0.1), dim=c(5, 2, 2))
+attr(B, "scale") <- "liter"  # Add metadata
+h5write(B, "example.h5","foo/foobaa/B")
+
+# Check structure after adding data
+h5ls("example.h5")
+```
+#Handling Data Frames
+```{r}
+# Create data frame with multiple data types
+df <- data.frame(
+    ID = 1L:5L,  # Integer
+    Value = seq(0,1, length.out=5),  # Numeric
+    Label = c("ab","cde", "ghi", "a", "s"),  # Character
+    stringsAsFactors = FALSE
+)
+h5write(df, "example.h5","df")
+h5ls("example.h5")
+```
+#Reading from HDF5
+```{r}
+# Read datasets from different groups
+readA <- h5read("example.h5","foo/A")
+readB <- h5read("example.h5", "foo/foobaa/B")
+readA
+```
+# Partial Data Updates (Partial I/O)
+```{r}
+# Update first 3 elements of column 1 in matrix A
+h5write(c(12, 13, 14),"example.h5", "foo/A", index=list(1:3,1))
+
+# Read and verify results
+h5read("example.h5","foo/A")
+```
+
+
+
+
+

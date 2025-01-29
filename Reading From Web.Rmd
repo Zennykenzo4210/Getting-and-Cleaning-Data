@@ -1,0 +1,59 @@
+---
+title: "Reading from The Web"
+author: "Tran ANH MINH"
+date: "`r Sys.Date()`"
+output: html_document
+---
+#Getting data off webpages - readLines()
+```{r}
+con <- url("https://scholar.google.com/citations?user=mG4imMEAAAAJ&hl=en")
+htmlCode <- readLines(con)
+close(con)
+htmlCode
+```
+#GET from the httr package
+```{r}
+# Load required libraries
+library(httr)
+library(XML)
+
+# Define URL
+url <- "https://scholar.google.com/citations?user=mG4imMEAAAAJ&hl=en"
+
+# Make GET request with user agent
+html2 <- GET(url, 
+    user_agent("Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
+)
+
+# Get content as text
+content2 <- content(html2, as="text")
+
+# Parse HTML
+parsedHtml <- htmlParse(content2, asText=TRUE)
+
+# Extract title using xpath
+xpathSApply(parsedHtml, "//title", xmlValue)
+```
+# Accessing websites with passwords
+```{r}
+pg1 <- GET("http://httpbin.org/basic-auth/user/passwd")
+pg1
+```
+```{r}
+pg2 <- GET("http://httpbin.org/basic-auth/user/passwd", authenticate("user", "passwd"))
+pg2
+```
+```{r}
+names(pg2)
+```
+#Using handles
+```{r}
+google <- handle("http://google.com")
+pg1 <-  GET(handle = google, path = "/")
+pg2 <- GET(handle = google, path = "search")
+```
+
+
+
+
+

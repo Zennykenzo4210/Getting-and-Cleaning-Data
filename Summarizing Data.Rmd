@@ -4,7 +4,7 @@ author: "TRAN ANH MINH"
 date: "`r Sys.Date()`"
 output: html_document
 ---
-# Getting data from the web
+# Set up data directory and import
 ```{r}
 if(!file.exists("./data")){
   dir.create("./data")
@@ -12,95 +12,101 @@ if(!file.exists("./data")){
 fileURL <- "https://data.wprdc.org/dataset/23fa923f-fc4e-4d4f-9be3-8a78c6674c02/resource/58e5ee1a-7428-42b1-81b7-c5a61e0719ce/download/diabetes_all_2016.csv"
 download.file(fileURL, destfile = "./data/diabetes_2016.csv", method = "curl")
 diabetes_2016 <- read.csv("./data/diabetes_2016.csv")
-diabetes_2016
 ```
-#Look at a bit of the data
+
+
+
+# Initial data inspection
 ```{r}
 head(diabetes_2016, n=5)
-```
-```{r}
 tail(diabetes_2016, n = 10)
 ```
-#Make a summary
+
+
+
+# Statistical summary
 ```{r}
 summary(diabetes_2016)
+
 ```
-#Mpre in depth infomation
+
+
+# Structure analysis
 ```{r}
 str(diabetes_2016)
 ```
-#Quantiles of quantitative variables
+
+
+
+# Distribution analysis
 ```{r}
-
-quantile(diabetes_2016$BMAN,na.rm = TRUE)
-
-```
-
-```{r}
+quantile(diabetes_2016$BMAN, na.rm = TRUE)
 quantile(diabetes_2016$BMAN, probs = c(0.5, 0.75, 0.9))
+
 ```
-#Make a table
+
+
+# Frequency analysis
 ```{r}
 table(diabetes_2016$BWAD, useNA = "ifany")
-```
-
-
-```{r}
 table(diabetes_2016$BPAD, diabetes_2016$BWAD)
 ```
-#Check for missing values
+
+
+
+# Data quality checks
 ```{r}
 sum(is.na(diabetes_2016$BPAD))
-```
-```{r}
 any(is.na(diabetes_2016$BMAN))
-```
-```{r}
 all(diabetes_2016$BPAN > 0)
 ```
-#Row and column sums
+
+
+# Missing value assessment
 ```{r}
 colSums(is.na(diabetes_2016))
-```
-```{r}
 all(colSums(is.na(diabetes_2016)) == 0)
 ```
-#Values with specific characteristics
+
+
+
+# Value filtering
 ```{r}
 table(diabetes_2016$BMAN %in% c("82"))
-```
-```{r}
 table(diabetes_2016$CT %in% c("101800", "101300"))
-```
-
-```{r}
 diabetes_2016[diabetes_2016$BPAD %in% c("1237", "1221"),]
 ```
-#Cross tabs
+
+
+
+# Cross-tabulation example
 ```{r}
 data("UCBAdmissions")
 DF = as.data.frame(UCBAdmissions)
 summary(DF)
-```
-
-```{r}
-xt <- xtabs( Freq ~ Gender + Admit, data = DF)
+xt <- xtabs(Freq ~ Gender + Admit, data = DF)
 xt
 ```
-# Flat tables
+
+
+
+# Complex tabulation
 ```{r}
 warpbreaks$replicate <- rep(1:9, len = 54)
 xt = xtabs(breaks ~., data = warpbreaks)
 xt
 ```
-# Size of a data set
+
+
+
+# Memory usage analysis
 ```{r}
 fakeData = rnorm(1e5)
 object.size(fakeData)
-```
-```{r}
 print(object.size(fakeData), units = "Mb")
 ```
+
+
 
 
 
